@@ -13,10 +13,11 @@ inattentive symptoms which are harder to detect. Girls with ADHD who are
 undiagnosed with continue suffering from symptoms that burden their
 mental health and capacity to function.
 
-Notes: \* build a multi-outcome model to predict both an individual’s
-sex and ADHD diagnosis using functional brain imaging data of
-adolescents and their socio-demographic, emotions, and parenting
-information \*
+Fundamental Question: What brain activity patterns are associated with ADHD; are they different between males and females, and if so, how?
+
+## Notes:
+- build a multi-outcome model to predict both an individual's sex and ADHD diagnosis using functional brain imaging data of adolescents and their socio-demographic, emotions, and parenting information
+- a multi-outcome model is designed to predict multiple target variables simultaneously using a single machine learning model
 
 ## Project Organization
 
