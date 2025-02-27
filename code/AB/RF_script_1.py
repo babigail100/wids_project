@@ -1,15 +1,20 @@
+'''
+OVER/UNDERSAMPLE DATA TO ACCOUNT FOR DOUBLE WEIGHT IN F1 SCORE
+    
+    
+    
+    
+'''
 import pandas as pd
 import numpy as np
 import matplotlib as plt
 import seaborn as sns
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.metrics import classification_report, f1_score, make_scorer
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.multioutput import MultiOutputClassifier
 
 # load and merge data
 q_train = pd.read_excel(r".\data\TRAIN\TRAIN_QUANTITATIVE_METADATA.xlsx")
@@ -23,8 +28,7 @@ train_df = q_train.merge(c_train, on='participant_id', how='left')\
 q_test = pd.read_excel(r".\data\TEST\TEST_QUANTITATIVE_METADATA.xlsx")
 c_test = pd.read_excel(r".\data\TEST\TEST_CATEGORICAL.xlsx")
 f_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
-test_df = q_test.merge(c_test, on='participant_id', how='left')\
-                .merge(f_test, on='participant_id', how='left')
+test_df = q_test.merge(c_test, on='participant_id', how='left').merge(f_test, on='participant_id', how='left')
 
 # identify data type for each column
 nums = ['EHQ_EHQ_Total','ColorVision_CV_Score','APQ_P_APQ_P_CP','APQ_P_APQ_P_ID',
@@ -54,33 +58,22 @@ X_train = X_train.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
 
-# Define weighted F1-score metric
-weighted_f1 = make_scorer(f1_score, average='weighted')
-
-# CV and hyperparameter tuning
-param_grid = {
-    'n_estimators': [100, 200],
-    'max_depth': [None, 20, 50],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 5]
-}
-
-rf = RandomForestClassifier(random_state=42)
-cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-grid_search = GridSearchCV(rf, param_grid, scoring=weighted_f1, cv=cv, n_jobs=-1)
+# model setup
+rf = RandomForestClassifier(n_estimators = 500, random_state=42, class_weight = [{0"balanced"}, {0: 1, 1: 2}])
 
 # Fit model using cross-validation
-grid_search.fit(X_train, y_train)
+rf.fit(X_train, y_train)
 
 # Best model from tuning
-best_rf = grid_search.best_estimator_
+best_rf = rf.best_estimator_
 
 # Evaluate on training set using cross-validation
-cv_scores = cross_val_score(best_rf, X_train, y_train, scoring=weighted_f1, cv=cv)
-print(f"Mean Weighted F1-Score (CV): {cv_scores.mean():.4f}")
+cv_scores = rf.cv_results_['mean_test_score']
+print(f"Mean Weighted F1-Score (CV): {np.mean(cv_scores):.4f}")
 
 # Make final predictions
 y_pred = best_rf.predict(X_test)
+y_pred = np.column_stack(best_rf.predict(X_test))
 
 # Save results
 results = pd.DataFrame({
