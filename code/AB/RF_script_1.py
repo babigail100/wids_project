@@ -1,10 +1,3 @@
-'''
-OVER/UNDERSAMPLE DATA TO ACCOUNT FOR DOUBLE WEIGHT IN F1 SCORE
-    
-    
-    
-    
-'''
 import pandas as pd
 import numpy as np
 import matplotlib as plt
@@ -16,14 +9,14 @@ from sklearn.metrics import classification_report, f1_score, make_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.multioutput import MultiOutputClassifier
 
+from imblearn.over_sampling import RandomOverSampler
+
 # load and merge data
 q_train = pd.read_excel(r".\data\TRAIN\TRAIN_QUANTITATIVE_METADATA.xlsx")
 c_train = pd.read_excel(r".\data\TRAIN\TRAIN_CATEGORICAL_METADATA.xlsx")
 s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
 f_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES.csv")
-train_df = q_train.merge(c_train, on='participant_id', how='left')\
-                  .merge(s_train, on='participant_id', how='left')\
-                  .merge(f_train, on='participant_id', how='left')
+train_df = q_train.merge(c_train, on='participant_id', how='left').merge(s_train, on='participant_id', how='left').merge(f_train, on='participant_id', how='left')
 
 q_test = pd.read_excel(r".\data\TEST\TEST_QUANTITATIVE_METADATA.xlsx")
 c_test = pd.read_excel(r".\data\TEST\TEST_CATEGORICAL.xlsx")
@@ -58,11 +51,16 @@ X_train = X_train.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
 
+weight = {'ADHD_Outcome': 1,'Sex_F': 2.0}
+oversampler = RandomOverSampler(sampling_strategy=weight, random_state=42)
+X_train_new, y_train_new = oversampler.fit_resample(X_train,y_train)
+
 # model setup
-rf = RandomForestClassifier(n_estimators = 500, random_state=42, class_weight = [{0"balanced"}, {0: 1, 1: 2}])
+rf = RandomForestClassifier(n_estimators = 500, random_state=42)
+clf = MultiOutputClassifier(rf)
 
 # Fit model using cross-validation
-rf.fit(X_train, y_train)
+clf.fit(X_train, y_train)
 
 # Best model from tuning
 best_rf = rf.best_estimator_
