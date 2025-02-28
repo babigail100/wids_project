@@ -5,11 +5,12 @@ import seaborn as sns
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.metrics import classification_report, f1_score, make_scorer
+from sklearn.metrics import classification_report, f1_score, make_scorer, confusion_matrix
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.multioutput import MultiOutputClassifier
+from sklearn.model_selection import train_test_split
 
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 # load and merge data
 q_train = pd.read_excel(r".\data\TRAIN\TRAIN_QUANTITATIVE_METADATA.xlsx")
@@ -51,27 +52,51 @@ X_train = X_train.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.apply(pd.to_numeric, errors='coerce')
 X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
 
+'''
 weight = {'ADHD_Outcome': 1,'Sex_F': 2.0}
 oversampler = RandomOverSampler(sampling_strategy=weight, random_state=42)
 X_train_new, y_train_new = oversampler.fit_resample(X_train,y_train)
 
+smote = SMOTE()
+X_train_new, y_train_new = smote.fit_resample(X_train, y_train)
+
+print(pd.DataFrame(y_train_new).value_counts())  # Check new class distribution
+'''
+X_train_fr, X_test_fr, y_train_fr, y_test_fr = train_test_split(X_train, y_train, test_size=.2, random_state=42)
+ 
+
+
 # model setup
-rf = RandomForestClassifier(n_estimators = 500, random_state=42)
+rf = RandomForestClassifier(n_estimators = 500, random_state=42, class_weight='balanced')
 clf = MultiOutputClassifier(rf)
 
-# Fit model using cross-validation
-clf.fit(X_train, y_train)
+# Fit model
+clf.fit(X_train_fr, y_train_fr)
+clf.score(X_test_fr, y_test_fr)
 
-# Best model from tuning
-best_rf = rf.best_estimator_
-
-# Evaluate on training set using cross-validation
-cv_scores = rf.cv_results_['mean_test_score']
-print(f"Mean Weighted F1-Score (CV): {np.mean(cv_scores):.4f}")
+rf2 = RandomForestClassifier(n_estimators = 500, random_state=42)
+clf2 = MultiOutputClassifier(rf2)
+clf2.fit(X_train_fr, y_train_fr)
+clf2.score(X_test_fr, y_test_fr)
 
 # Make final predictions
-y_pred = best_rf.predict(X_test)
-y_pred = np.column_stack(best_rf.predict(X_test))
+y_pred = clf.predict(X_test_fr)
+for i, target in enumerate(y_train.columns):
+    print(f"Classification Report for {target}:")
+    print(classification_report(y_test_fr.iloc[:, i], y_pred[:, i]))
+
+y_pred2 = clf2.predict(X_test_fr)
+for i, target in enumerate(y_train.columns):
+    print(f"Classification Report for {target}:")
+    print(classification_report(y_test_fr.iloc[:, i], y_pred2[:, i]))
+
+for i, label in enumerate(y_test_fr.columns):  
+    print(f"\nConfusion Matrix for {label}:")
+    print(confusion_matrix(np.array(y_test_fr)[:, i], y_pred[:, i]))
+
+for i, label in enumerate(y_test_fr.columns):  
+    print(f"\nConfusion Matrix for {label}:")
+    print(confusion_matrix(np.array(y_test_fr)[:, i], y_pred2[:, i]))
 
 # Save results
 results = pd.DataFrame({
