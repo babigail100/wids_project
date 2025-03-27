@@ -1,36 +1,19 @@
 import pandas as pd
 
-def main():
-    # -------------------------------------------
-    # Step 1: Load the Train Categorical and Quantitative Datasets
-    # -------------------------------------------
-    try:
-        train_cat = pd.read_excel("/Users/noeliagarciaw/Desktop/IS5150/wids_project/data/TEST/TEST_CATEGORICAL.xlsx")
-        train_quant = pd.read_excel("/Users/noeliagarciaw/Desktop/IS5150/wids_project/data/TEST/TEST_QUANTITATIVE_METADATA.xlsx")
-    except Exception as e:
-        print("Error loading Excel files:", e)
-        return
+# Define the file paths for the categorical and quantitative datasets
+cat_file_path = '/Users/noeliagarciaw/Desktop/wids/wids_project/data/TEST/TEST_CATEGORICAL.xlsx'
+quant_file_path = '/Users/noeliagarciaw/Desktop/wids/wids_project/data/TEST/TEST_QUANTITATIVE_METADATA.xlsx'
 
-    # -------------------------------------------
-    # Step 2: Merge Datasets on 'participant_id'
-    # -------------------------------------------
-    merged_train = pd.merge(train_cat, train_quant, on="participant_id", how="outer")
-    print("Merged Train Data (first 5 rows):")
-    print(merged_train.head())
-    
-    # -------------------------------------------
-    # Step 3: Calculate Missing Data Percentages
-    # -------------------------------------------
-    # Percentage of missing values for each column:
-    missing_perc = merged_train.isnull().mean() * 100
-    print("\nMissing Percentage per Column:")
-    print(missing_perc)
-    
-    # Overall missing percentage:
-    total_cells = merged_train.shape[0] * merged_train.shape[1]
-    total_missing = merged_train.isnull().sum().sum()
-    overall_missing_perc = (total_missing / total_cells) * 100
-    print("\nOverall Missing Percentage: {:.2f}%".format(overall_missing_perc))
+# Load the datasets into DataFrames
+cat_df = pd.read_excel(cat_file_path)
+quant_df = pd.read_excel(quant_file_path)
 
-if __name__ == '__main__':
-    main()
+# Calculate the missing value percentage for each column in the categorical dataset
+missing_percent_cat = cat_df.isna().mean() * 100
+print("Missing Value Percentage for Categorical Data:")
+print(missing_percent_cat)
+
+# Calculate the missing value percentage for each column in the quantitative dataset
+missing_percent_quant = quant_df.isna().mean() * 100
+print("\nMissing Value Percentage for Quantitative Data:")
+print(missing_percent_quant)
