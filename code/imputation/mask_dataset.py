@@ -221,13 +221,13 @@ print(f"\n\u2705 Best method based on lowest average absolute bias: {best_method
 print("\nApplying best method to full train and test datasets...")
 
 if best_method == "KNN":
-    final_train = impute_knn(train_data)
+    final_train = impute_knn(masked_train)
     final_test = impute_knn(test_data)
 elif best_method == "MICE":
-    final_train = impute_mice(train_data)
+    final_train = impute_mice(masked_train)
     final_test = impute_mice(test_data)
 else:
-    final_train = impute_random_forest(train_data)
+    final_train = impute_random_forest(masked_train)
     final_test = impute_random_forest(test_data)
 
 # ----------------------------
