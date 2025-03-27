@@ -11,16 +11,29 @@ from sklearn.metrics import make_scorer, f1_score, classification_report
 from itertools import product
 
 # load and merge data
-q_train = pd.read_excel(r".\data\TRAIN\TRAIN_QUANTITATIVE_METADATA.xlsx")
-c_train = pd.read_excel(r".\data\TRAIN\TRAIN_CATEGORICAL_METADATA.xlsx")
-s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
-f_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES.csv")
-train_df = q_train.merge(c_train, on='participant_id', how='left').merge(s_train, on='participant_id', how='left').merge(f_train, on='participant_id', how='left')
 
-q_test = pd.read_excel(r".\data\TEST\TEST_QUANTITATIVE_METADATA.xlsx")
-c_test = pd.read_excel(r".\data\TEST\TEST_CATEGORICAL.xlsx")
-f_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
-test_df = q_test.merge(c_test, on='participant_id', how='left').merge(f_test, on='participant_id', how='left')
+# original data
+#q_train = pd.read_excel(r".\data\TRAIN\TRAIN_QUANTITATIVE_METADATA.xlsx")
+#c_train = pd.read_excel(r".\data\TRAIN\TRAIN_CATEGORICAL_METADATA.xlsx")
+#s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
+#f_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES.csv")
+#train_df = q_train.merge(c_train, on='participant_id', how='left').merge(s_train, on='participant_id', how='left').merge(f_train, on='participant_id', how='left')
+
+#q_test = pd.read_excel(r".\data\TEST\TEST_QUANTITATIVE_METADATA.xlsx")
+#c_test = pd.read_excel(r".\data\TEST\TEST_CATEGORICAL.xlsx")
+#f_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
+#test_df = q_test.merge(c_test, on='participant_id', how='left').merge(f_test, on='participant_id', how='left')
+
+# training data
+imp_train = pd.read_excel(r".\data\imputed_data\train_out_path.xlsx")
+fmri_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES.csv") # this dataset cannot be stored in GitHub; found in Kaggle
+s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
+train_df = imp_train.merge(s_train, on='participant_id',how='left').merge(fmri_train, on='participant_id',how='left')
+
+# testing data
+imp_test = pd.read_excel(r".\data\imputed_data\test_out_path.xlsx")
+fmri_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
+test_df = imp_test.merge(fmri_test, on='participant_id',how='left')
 
 # identify data type for each column
 nums = ['EHQ_EHQ_Total','ColorVision_CV_Score','APQ_P_APQ_P_CP','APQ_P_APQ_P_ID',
@@ -42,13 +55,13 @@ y_train = train_df[targs]
 X_test = test_df.drop(columns=['participant_id'])
 
 # OHE categorical variables (may be optional depending on loaded data)
-X_train = pd.get_dummies(X_train, columns=cats, drop_first=True)
-X_test = pd.get_dummies(X_test, columns=cats, drop_first=True)
+#X_train = pd.get_dummies(X_train, columns=cats, drop_first=True)
+#X_test = pd.get_dummies(X_test, columns=cats, drop_first=True)
 
 # amateur imputation for sake of writing code
-means = pd.concat([X_train, X_test]).mean()
-X_train.fillna(means, inplace=True)
-X_test.fillna(means, inplace=True)
+#means = pd.concat([X_train, X_test]).mean()
+#X_train.fillna(means, inplace=True)
+#X_test.fillna(means, inplace=True)
 
 # train and validation set for finding optimal model
 X_train_fr, X_test_fr, y_train_fr, y_test_fr = train_test_split(X_train, y_train, test_size=.2, random_state=42)
@@ -192,7 +205,7 @@ results = pd.DataFrame({
     "Sex_F": classification_sex
 })
 
-results.to_csv("SVM_results_0325.csv", index=False)
+results.to_csv("SVM_results_0327.csv", index=False)
 '''
 # Define hyperparameter grid
 param_grid = {
