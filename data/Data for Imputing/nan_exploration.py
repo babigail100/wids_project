@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import missingno as msno
 import seaborn as sns
+
+import pip install missingno
+import missingno as msno
 
 # 1. Read in the data
 train_cat = pd.read_excel("/Users/noeliagarciaw/Desktop/IS5150/wids_project/data/Data for Imputing/Categorical Data for Imputing/TRAIN_CATEGORICAL_METADATA.xlsx")
