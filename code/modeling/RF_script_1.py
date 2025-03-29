@@ -105,7 +105,7 @@ y_pred_probs = clf.predict_proba(X_test_fr)
 sex_probs = y_pred_probs[1][:, 1]  # Get probability of Sex_F = 1
 
 '''
-# Visulaize probabilty of Female distribution
+# Visualize probabilty of Female distribution
 sns.histplot(sex_probs, bins=20, kde=True)
 plt.xlabel("Probability of Sex_F = 1")
 plt.ylabel("Count")
