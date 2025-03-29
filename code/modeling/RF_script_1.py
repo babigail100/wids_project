@@ -33,7 +33,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 # training data
 imp_train = pd.read_excel(r".\data\imputed_data\train_out_path.xlsx")
-fmri_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES.csv") # this dataset cannot be stored in GitHub; found in Kaggle
+fmri_train = pd.read_csv(r"C:\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES_new_36P_Pearson.csv") # this dataset cannot be stored in GitHub; found in Kaggle
 s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
 train_df = imp_train.merge(s_train, on='participant_id',how='left').merge(fmri_train, on='participant_id',how='left')
 
@@ -104,6 +104,7 @@ y_pred_probs = clf.predict_proba(X_test_fr)
 # Extract probabilities for Sex_F = 1
 sex_probs = y_pred_probs[1][:, 1]  # Get probability of Sex_F = 1
 
+'''
 # Visulaize probabilty of Female distribution
 sns.histplot(sex_probs, bins=20, kde=True)
 plt.xlabel("Probability of Sex_F = 1")
@@ -114,6 +115,7 @@ plt.show()
 custom_threshold = 0.30
 y_pred_adjusted = (sex_probs > custom_threshold).astype(int)
 np.mean(y_pred_adjusted)
+'''
 
 #########################################################################################################
 # Use different test model to find optimal cutoff values
@@ -167,6 +169,7 @@ for threshold_adhd, threshold_sex in product(thresholds_adhd, thresholds_sex):
 # Convert results to DataFrame for analysis
 results_df = pd.DataFrame(results, columns=["Threshold_ADHD", "Threshold_Sex", "Final_F1_Score"])
 
+'''
 # Plot heatmap of F1 scores for different threshold pairs
 pivot_table = results_df.pivot(index="Threshold_ADHD", columns="Threshold_Sex", values="Final_F1_Score")
 
@@ -182,7 +185,7 @@ plt.xticks(ticks=np.linspace(0, len(thresholds_sex) - 1, 5), labels=np.round(thr
 plt.yticks(ticks=np.linspace(0, len(thresholds_adhd) - 1, 5), labels=np.round(thresholds_adhd[::len(thresholds_adhd)//5], 2))
 
 plt.show()
-
+'''
 
 # Find the optimal pair of thresholds that maximize the F1 score
 optimal_thresholds = results_df.loc[results_df["Final_F1_Score"].idxmax()]
@@ -221,7 +224,7 @@ results = pd.DataFrame({
     "Sex_F": classification_sex
 })
 
-results.to_csv("RF_results_0327.csv", index=False)
+results.to_csv("RF_results_0329.csv", index=False)
 
 #########################################################################################################
 # Original code

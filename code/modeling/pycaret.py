@@ -2,6 +2,18 @@ from pycaret.classification import *
 import pandas as pd
 import numpy as np
 
+# training data
+imp_train = pd.read_excel(r".\data\imputed_data\train_out_path.xlsx")
+fmri_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES_new_36P_Pearson.csv") # this dataset cannot be stored in GitHub; found in Kaggle
+s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
+train_df = imp_train.merge(s_train, on='participant_id',how='left').merge(fmri_train, on='participant_id',how='left')
+
+# testing data
+imp_test = pd.read_excel(r".\data\imputed_data\test_out_path.xlsx")
+fmri_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
+test_df = imp_test.merge(fmri_test, on='participant_id',how='left')
+
+
 sample_weight = np.ones(len(y))
 sample_weight[(y["ADHD_Outcome"] == 1) & (y["Sex_F"] == 1)] = 2
 
