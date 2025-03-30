@@ -17,7 +17,18 @@ Fundamental Question: What brain activity patterns are associated with ADHD; are
 
 ## Notes:
 - build a multi-outcome model to predict both an individual's sex and ADHD diagnosis using functional brain imaging data of adolescents and their socio-demographic, emotions, and parenting information
-- a multi-outcome model is designed to predict multiple target variables simultaneously using a single machine learning model
+- double-weight females diagnosed with ADHD in the model
+- optimize weighted F1-score
+
+## Methods:
+- a basic random forest model trained on the original data was used as a baseline; F1-Score: 0.3628
+- after basic preprocessing (OHE), a neural network model yielded an F1-score of 0.4379
+- imputation methods were implemented to prepare the quantitative and categorical data for other modeling techniques
+- the imputed data was used in a random forest model; sample weights were used to double-weight females with ADHD and determine optimal threshold values for each response variable, which yielded an F1-score of 0.5553
+- the imputed data was used in a support vector machine model; sample weights were used to double-weight females with ADHD and determine optimal threshold values for each response variable, which yielded an F1-score of 0.6015
+
+## Findings:
+- the highest F1-score obtained using the methods outlined was 0.6015 via the support vector machine model
 
 ## Project Organization
 
