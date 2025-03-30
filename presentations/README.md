@@ -1,7 +1,3 @@
 # Presentations
 
-Presentation slides.
-
-License: This work is licensed under a [Creative Commons
-Attribution-ShareAlike 4.0 International
-License](https://creativecommons.org/licenses/by-sa/4.0/).
+Presentation slides marking progress as of 02/13/25: https://docs.google.com/presentation/d/1VHkvIZo3Iv4GXaL8ucRKRJX3R4F2rODDIQfgHVHSVHY/edit#slide=id.g32da4010169_1_0
