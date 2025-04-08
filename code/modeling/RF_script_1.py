@@ -32,13 +32,13 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 #test_df = q_test.merge(c_test, on='participant_id', how='left').merge(f_test, on='participant_id', how='left')
 
 # training data
-imp_train = pd.read_excel(r".\data\imputed_data\train_out_path.xlsx")
+imp_train = pd.read_excel(r".\data\imputed_data\train_out_path_new.xlsx")
 fmri_train = pd.read_csv(r"C:\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES_new_36P_Pearson.csv") # this dataset cannot be stored in GitHub; found in Kaggle
 s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
 train_df = imp_train.merge(s_train, on='participant_id',how='left').merge(fmri_train, on='participant_id',how='left')
 
 # testing data
-imp_test = pd.read_excel(r".\data\imputed_data\test_out_path.xlsx")
+imp_test = pd.read_excel(r".\data\imputed_data\test_out_path_new.xlsx")
 fmri_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
 test_df = imp_test.merge(fmri_test, on='participant_id',how='left')
 

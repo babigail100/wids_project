@@ -31,8 +31,7 @@ clf_setup = setup(
     target=y_train_fr,  # Specify both targets
     session_id=42,
     fold_strategy='stratifiedkfold',
-    fold=5,
-    use_gpu=True
+    fold=5
 )
 
 # Compare models and select the best one
