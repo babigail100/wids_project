@@ -2,13 +2,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.svm import SVC
-from sklearn.pipeline import Pipeline
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.metrics import classification_report, f1_score, make_scorer, confusion_matrix, precision_recall_fscore_support
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import make_scorer, f1_score, classification_report
+
 from itertools import product
+from imblearn.over_sampling import RandomOverSampler, SMOTE
+
+#################################################################################################
+# Merge data sets, clean data, split into train/test sets
+#################################################################################################
 
 # load and merge data
 
@@ -25,15 +32,16 @@ from itertools import product
 #test_df = q_test.merge(c_test, on='participant_id', how='left').merge(f_test, on='participant_id', how='left')
 
 # training data
-imp_train = pd.read_excel(r".\data\imputed_data\train_out_path.xlsx")
-fmri_train = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES_new_36P_Pearson.csv") # this dataset cannot be stored in GitHub; found in Kaggle
+imp_train = pd.read_excel(r".\data\imputed_data\train_out_path_new.xlsx")
+fmri_train = pd.read_csv(r"C:\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TRAIN_FUNCTIONAL_CONNECTOME_MATRICES_new_36P_Pearson.csv") # this dataset cannot be stored in GitHub; found in Kaggle
 s_train = pd.read_excel(r".\data\TRAIN\TRAINING_SOLUTIONS.xlsx")
 train_df = imp_train.merge(s_train, on='participant_id',how='left').merge(fmri_train, on='participant_id',how='left')
 
 # testing data
-imp_test = pd.read_excel(r".\data\imputed_data\test_out_path.xlsx")
+imp_test = pd.read_excel(r".\data\imputed_data\test_out_path_new.xlsx")
 fmri_test = pd.read_csv(r"\Users\babig\OneDrive\Documents\USU Sen\Data Competitions\TEST_FUNCTIONAL_CONNECTOME_MATRICES.csv")
 test_df = imp_test.merge(fmri_test, on='participant_id',how='left')
+
 
 # identify data type for each column
 nums = ['EHQ_EHQ_Total','ColorVision_CV_Score','APQ_P_APQ_P_CP','APQ_P_APQ_P_ID',
@@ -48,6 +56,7 @@ cats = ['Basic_Demos_Enroll_Year','Basic_Demos_Study_Site','PreInt_Demos_Fam_Chi
 
 targs = ['ADHD_Outcome','Sex_F'] #binary targets
 
+
 # save participant ids to reference in the results
 participant_ids = test_df['participant_id']
 X_train = train_df.drop(columns=targs + ['participant_id'])
@@ -58,25 +67,31 @@ X_test = test_df.drop(columns=['participant_id'])
 #X_train = pd.get_dummies(X_train, columns=cats, drop_first=True)
 #X_test = pd.get_dummies(X_test, columns=cats, drop_first=True)
 
-# amateur imputation for sake of writing code
-#means = pd.concat([X_train, X_test]).mean()
-#X_train.fillna(means, inplace=True)
-#X_test.fillna(means, inplace=True)
-
-# train and validation set for finding optimal model
-X_train_fr, X_test_fr, y_train_fr, y_test_fr = train_test_split(X_train, y_train, test_size=.2, random_state=42)
- 
 # ensure test set has same columns as training set
 # X_train = X_train.apply(pd.to_numeric, errors='coerce')
 # X_test = X_test.apply(pd.to_numeric, errors='coerce')
 # X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
 
+'''
+weight = {'ADHD_Outcome': 1,'Sex_F': 2.0}
+oversampler = RandomOverSampler(sampling_strategy=weight, random_state=42)
+X_train_new, y_train_new = oversampler.fit_resample(X_train,y_train)
+
+smote = SMOTE()
+X_train_new, y_train_new = smote.fit_resample(X_train, y_train)
+
+print(pd.DataFrame(y_train_new).value_counts())  # Check new class distribution
+'''
+X_train_fr, X_test_fr, y_train_fr, y_test_fr = train_test_split(X_train, y_train, test_size=.2, random_state=42)
+ 
 ########################################################################################################
 # Observe Sex_F probability distribution
 ########################################################################################################
 
-svm = SVC(probability=True, random_state = 42, class_weight = 'balanced')
-clf = MultiOutputClassifier(svm, n_jobs = -1)
+rf = RandomForestClassifier(n_estimators = 100, 
+                            random_state = 42, 
+                            class_weight = 'balanced_subsample')
+clf = MultiOutputClassifier(rf, n_jobs = -1)
 clf.fit(X_train_fr, y_train_fr)
 
 # Get predicted probabilities for each class
@@ -90,7 +105,7 @@ y_pred_probs = clf.predict_proba(X_test_fr)
 sex_probs = y_pred_probs[1][:, 1]  # Get probability of Sex_F = 1
 
 '''
-# Visulaize probabilty of Female distribution
+# Visualize probabilty of Female distribution
 sns.histplot(sex_probs, bins=20, kde=True)
 plt.xlabel("Probability of Sex_F = 1")
 plt.ylabel("Count")
@@ -105,8 +120,9 @@ np.mean(y_pred_adjusted)
 #########################################################################################################
 # Use different test model to find optimal cutoff values
 #########################################################################################################
-svm = SVC(probability=True, random_state = 42)
-clf = MultiOutputClassifier(svm, n_jobs = -1)
+rf = RandomForestClassifier(n_estimators = 500, 
+                            random_state = 42)
+clf = MultiOutputClassifier(rf, n_jobs = -1)
 sample_weight = np.ones(len(y_train_fr))  # Default weight = 1 for all rows
 sample_weight[(y_train_fr["ADHD_Outcome"] == 1) & (y_train_fr["Sex_F"] == 1)] = 2
 clf.fit(X_train_fr, y_train_fr, sample_weight=sample_weight)
@@ -183,16 +199,16 @@ print("Maximized Final F1 Score:", optimal_thresholds["Final_F1_Score"])
 # Apply cutoff values to real train data and predict on real test data
 #########################################################################################################
 # train model
-base_svm = SVC(probability=True, random_state=42)
-msvm = MultiOutputClassifier(base_svm, n_jobs=-1)
-sample_weight = np.ones(len(y_train))
+rf = RandomForestClassifier(n_estimators = 500, 
+                            random_state = 42)
+clf = MultiOutputClassifier(rf, n_jobs = -1)
+sample_weight = np.ones(len(y_train))  # Default weight = 1 for all rows
 sample_weight[(y_train["ADHD_Outcome"] == 1) & (y_train["Sex_F"] == 1)] = 2
-msvm.fit(X_train, y_train, sample_weight=sample_weight)
+clf.fit(X_train, y_train, sample_weight=sample_weight)
 
-# Get prediction probabilities
-y_pred_probs = msvm.predict_proba(X_test)
+# make and adjust predictions
+y_pred_probs = clf.predict_proba(X_test)
 
-# Adjust predictions based on predefined thresholds
 y_pred_adjusted = np.column_stack([
     (y_pred_probs[0][:, 1] > optimal_thresholds["Threshold_ADHD"]).astype(int),  # ADHD
     (y_pred_probs[1][:, 1] > optimal_thresholds["Threshold_Sex"]).astype(int)    # Sex_F
@@ -208,37 +224,49 @@ results = pd.DataFrame({
     "Sex_F": classification_sex
 })
 
-results.to_csv("SVM_results_0329.csv", index=False)
+results.to_csv("RF_results_0329.csv", index=False)
+
+#########################################################################################################
+# Original code
+#########################################################################################################
 '''
-# Define hyperparameter grid
-param_grid = {
-    "estimator__C": [0.1, 1, 10],  # Regularization parameter
-    "estimator__gamma": ["scale", "auto"],  # Kernel coefficient
-}
+# model setup
+rf = RandomForestClassifier(n_estimators = 500, random_state=42, class_weight='balanced')
+clf = MultiOutputClassifier(rf)
 
-# Define weighted F1 scoring
-def weighted_f1(y_true, y_pred):
-    # Double weight for female participants (Sex_F = 1)
-    sample_weights = np.where(y_true[:, 1] == 1, 2, 1)
-    
-    return f1_score(y_true, y_pred, average="weighted", sample_weight=sample_weights)
+# Fit model
+clf.fit(X_train_fr, y_train_fr)
+clf.score(X_test_fr, y_test_fr)
 
-weighted_f1_scorer = make_scorer(weighted_f1)
+rf2 = RandomForestClassifier(n_estimators = 500, random_state=42)
+clf2 = MultiOutputClassifier(rf2)
+clf2.fit(X_train_fr, y_train_fr)
+clf2.score(X_test_fr, y_test_fr)
 
-# Set up GridSearchCV
-grid_search = GridSearchCV(msvm, param_grid, scoring=weighted_f1_scorer, cv=10, n_jobs=-1)
+# Make final predictions
+y_pred = clf.predict(X_test_fr)
+for i, target in enumerate(y_train.columns):
+    print(f"Classification Report for {target}:")
+    print(classification_report(y_test_fr.iloc[:, i], y_pred[:, i]))
 
-# Fit the model
-grid_search.fit(X_train, y_train)
+y_pred2 = clf2.predict(X_test_fr)
+for i, target in enumerate(y_train.columns):
+    print(f"Classification Report for {target}:")
+    print(classification_report(y_test_fr.iloc[:, i], y_pred2[:, i]))
 
-# Get the best model and parameters
-best_model = grid_search.best_estimator_
-best_params = grid_search.best_params_
+for i, label in enumerate(y_test_fr.columns):  
+    print(f"\nConfusion Matrix for {label}:")
+    print(confusion_matrix(np.array(y_test_fr)[:, i], y_pred[:, i]))
 
-print("Best Parameters:", best_params)
-print("Best Weighted F1-Score:", grid_search.best_score_)
+for i, label in enumerate(y_test_fr.columns):  
+    print(f"\nConfusion Matrix for {label}:")
+    print(confusion_matrix(np.array(y_test_fr)[:, i], y_pred2[:, i]))
 
-# Evaluate with cross-validation
-cv_scores = cross_val_score(best_model, X_train, y_train, scoring=weighted_f1_scorer, cv=5)
-print("Cross-validated Weighted F1-Score:", cv_scores.mean())
+# Save results
+results = pd.DataFrame({
+    "participant_id": participant_ids,
+    "ADHD_Outcome": y_pred[:, 0],
+    "Sex_F": y_pred[:, 1]
+})
+#results.to_csv("RF_results.csv", index=False)
 '''
